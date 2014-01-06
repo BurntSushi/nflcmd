@@ -79,6 +79,11 @@ def run():
        help='Restrict the number of results shown.')
     args = parser.parse_args()
 
+    for cat in args.categories:
+        if cat not in nfldb.stat_categories:
+            eprint("%s is not a valid statistical category.", cat)
+            sys.exit(1)
+
     stype = 'Regular'
     if args.pre:
         stype = 'Preseason'
