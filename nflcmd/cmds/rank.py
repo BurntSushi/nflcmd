@@ -16,42 +16,8 @@ def eprint(*args, **kwargs):
     print(*args, **kwargs)
 
 
-def show_game_table(db, player, year, stype, week_range=None, pos=None):
-    if pos is None:
-        pos = player.position
-
-    games = nflcmd.query_games(db, player, year, stype, week_range).as_games()
-    pstats = map(partial(nflcmd.Game.make, db, player), games)
-    spec = nflcmd.columns['game'][nflcmd.pcolumns[pos]]
-    nflcmd.show_table(db, player, pstats,
-                      nflcmd.columns['game']['prefix'] + spec,
-                      summary=True)
-
-
-def show_season_table(db, player, stype, week_range=None, pos=None):
-    if pos is None:
-        pos = player.position
-    _, cur_year, _ = nfldb.current(db)
-
-    pstats = []
-    for year in range(2009, cur_year+1):
-        qgames = nflcmd.query_games(db, player, year, stype, week_range)
-        games = qgames.as_games()
-        if len(games) == 0:
-            continue
-
-        game_stats = map(partial(nflcmd.Game.make, db, player), games)
-        agg = qgames.sort([]).as_aggregate()
-        pstats.append(nflcmd.Games(db, year, game_stats, agg[0]))
-
-    spec = nflcmd.columns['season'][nflcmd.pcolumns[pos]]
-    nflcmd.show_table(db, player, pstats,
-                      nflcmd.columns['season']['prefix'] + spec,
-                      summary=True)
-
-
 def run():
-    """Runs the `nflstats` command."""
+    """Runs the `nflrank` command."""
     db = nfldb.connect()
     _, cur_year, _ = nfldb.current(db)
 
