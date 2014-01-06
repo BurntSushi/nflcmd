@@ -41,8 +41,7 @@ setup(
     author_email='nflcmd@burntsushi.net',
     version=version,
     license='UNLICENSE',
-    description='A library to manage and update NFL data in a relational '
-                'database.',
+    description='A set of commands for viewing and ranking NFL data.',
     long_description=longdesc,
     url='https://github.com/BurntSushi/nflcmd',
     classifiers=[
