@@ -1,0 +1,4 @@
+#!/usr/bin/env python2
+
+import nflcmd.cmds.rank
+nflcmd.cmds.rank.run()

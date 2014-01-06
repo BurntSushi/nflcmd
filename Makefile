@@ -24,7 +24,7 @@ dev-install:
 
 pep8:
 	pep8-python2 nflcmd/*.py nflcmd/cmds/*.py
-	pep8-python2 scripts/nflstats
+	pep8-python2 scripts/nfl{rank,stats}
 
 push:
 	git push origin master
