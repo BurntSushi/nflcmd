@@ -75,6 +75,8 @@ def run():
        help='When set, only show players in the given positions.')
     aa('--teams', type=str, default=[], nargs='+',
        help='When set, only show players currently on the given teams.')
+    aa('--limit', type=int, default=10,
+       help='Restrict the number of results shown.')
     args = parser.parse_args()
 
     stype = 'Regular'
@@ -107,7 +109,7 @@ def run():
     if len(args.teams) > 0:
         q.player(team=args.teams)
     q.sort([(cat, 'desc') for cat in args.categories])
-    q.limit(10)
+    q.limit(args.limit)
     pstats = map(to_games, q.as_aggregate())
 
     spec = ['name', 'team', 'game_count'] + args.categories
