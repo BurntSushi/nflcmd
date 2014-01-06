@@ -10,6 +10,10 @@ import nflcmd
 
 __all__ = ['run']
 
+prefix_game = ['week', 'outcome', 'game_date', 'opp']
+
+prefix_season = ['year', 'teams', 'game_count']
+
 
 def eprint(*args, **kwargs):
     kwargs['file'] = sys.stderr
@@ -22,9 +26,18 @@ def show_game_table(db, player, year, stype, week_range=None, pos=None):
 
     games = nflcmd.query_games(db, player, year, stype, week_range).as_games()
     pstats = map(partial(nflcmd.Game.make, db, player), games)
-    spec = nflcmd.columns['game'][nflcmd.pcolumns[pos]]
-    nflcmd.show_table(db, pstats, nflcmd.columns['game']['prefix'] + spec,
-                      summary=True)
+
+    spec = prefix_game + nflcmd.columns['game'][nflcmd.pcolumns[pos]]
+    rows = [nflcmd.header_row(spec)]
+    rows += map(partial(nflcmd.pstat_to_row, spec), pstats)
+    if len(pstats) > 1:
+        summary = nfldb.aggregate(pstat._pstat for pstat in pstats)[0]
+        allrows = nflcmd.Game(db, None, '-', summary)
+        allrows._fgs = []
+        for pstat in pstats:
+            allrows._fgs += pstat.fgs
+        rows.append(nflcmd.pstat_to_row(spec, allrows))
+    print(nflcmd.table(rows))
 
 
 def show_season_table(db, player, stype, week_range=None, pos=None):
@@ -43,9 +56,18 @@ def show_season_table(db, player, stype, week_range=None, pos=None):
         agg = qgames.sort([]).as_aggregate()
         pstats.append(nflcmd.Games(db, year, game_stats, agg[0]))
 
-    spec = nflcmd.columns['season'][nflcmd.pcolumns[pos]]
-    nflcmd.show_table(db, pstats, nflcmd.columns['season']['prefix'] + spec,
-                      summary=True)
+    spec = prefix_season + nflcmd.columns['season'][nflcmd.pcolumns[pos]]
+    rows = [nflcmd.header_row(spec)]
+    rows += map(partial(nflcmd.pstat_to_row, spec), pstats)
+    if len(pstats) > 1:
+        summary = nfldb.aggregate(pstat._pstat for pstat in pstats)[0]
+        allrows = nflcmd.Games(db, '-', [], summary)
+        allrows._fgs = []
+        for pstat in pstats:
+            allrows._fgs += pstat.fgs
+            allrows.games += pstat.games
+        rows.append(nflcmd.pstat_to_row(spec, allrows))
+    print(nflcmd.table(rows))
 
 
 def run():

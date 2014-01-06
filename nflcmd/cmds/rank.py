@@ -71,9 +71,10 @@ def run():
        help='When set, only data from the preseason will be used.')
     aa('--post', action='store_true',
        help='When set, only data from the postseason will be used.')
-    aa('--show-as', type=str, default=None,
-       help='Force display of rankings as a particular position. This may '
-            'need to be for inactive players.')
+    aa('--pos', type=str, default=[], nargs='+',
+       help='When set, only show players in the given positions.')
+    aa('--teams', type=str, default=[], nargs='+',
+       help='When set, only show players currently on the given teams.')
     args = parser.parse_args()
 
     stype = 'Regular'
@@ -82,22 +83,34 @@ def run():
     if args.post:
         stype = 'Postseason'
 
-    # pos = None 
-    # if args.show_as is not None: 
-        # pos = nfldb.Enums.player_pos[args.show_as] 
-
     years = nflcmd.arg_range(args.years, 2009, cur_year)
     weeks = nflcmd.arg_range(args.weeks, 1, 17)
 
-    q = nfldb.Query(db)
-    q.game(season_year=years, season_type=stype, week=weeks)
-    q.play(passing_yds__ne=0)
-    q.sort(('passing_yds', 'desc'))
-    q.limit(10)
-
     def to_games(agg):
         syrs = years[0] if len(years) == 1 else '%d-%d' % (years[0], years[-1])
-        return nflcmd.Games(db, syrs, [], agg)
+        qgames = nflcmd.query_games(db, agg.player, years, stype, weeks)
+        return nflcmd.Games(db, syrs, qgames.as_games(), agg)
 
-    spec = ['name', 'team'] + nflcmd.columns['season']['passer']
-    nflcmd.show_table(db, map(to_games, q.as_aggregate()), spec)
+    catq = nfldb.QueryOR(db)
+    for cat in args.categories:
+        k = cat + '__ne'
+        catq.play(**{k: 0})
+
+    q = nfldb.Query(db)
+    q.game(season_year=years, season_type=stype, week=weeks)
+    q.andalso(catq)
+    if len(args.pos) > 0:
+        posq = nfldb.QueryOR(db)
+        for pos in args.pos:
+            posq.player(position=nfldb.Enums.player_pos[pos])
+        q.andalso(posq)
+    if len(args.teams) > 0:
+        q.player(team=args.teams)
+    q.sort([(cat, 'desc') for cat in args.categories])
+    q.limit(10)
+    pstats = map(to_games, q.as_aggregate())
+
+    spec = ['name', 'team', 'game_count'] + args.categories
+    rows = [nflcmd.header_row(spec)]
+    rows += map(partial(nflcmd.pstat_to_row, spec), pstats)
+    print(nflcmd.table(rows))

@@ -9,7 +9,6 @@ import nfldb
 
 columns = {
     'game': {
-        'prefix': ['week', 'outcome', 'game_date', 'opp'],
         'passer': ['passing_cmp', 'passing_att', 'passing_ratio',
                    'passing_yds', 'passing_yds_att', 'passing_tds',
                    'passing_int',
@@ -49,7 +48,6 @@ columns = {
                      ],
     },
     'season': {
-        'prefix': ['year', 'teams', 'game_count'],
         'passer': ['passing_cmp', 'passing_att', 'passing_ratio',
                    'passing_yds', 'passing_yds_att', 'passing_yds_game',
                    'passing_300', 'passing_tds', 'passing_int',
@@ -417,57 +415,35 @@ def player_team_in_game(db, game, player):
     return q.as_play_players()[0].team
 
 
-def show_table(db, pstats, spec, summary=False):
+def pstat_to_row(spec, pstat):
     """
-    Prints a table of statistics to stdout. `p` should be a
-    `nfldb.Player` object, `pstats` should be a list of `Game` or
-    `Season` objects, and `spec` should be a list of attributes to show
-    for each row.
-
-    If `pstats` is empty, then a message will be printed saying that no
-    statistics could be found.
+    Transforms a player statistic to a list of strings corresponding
+    to the given spec. Note that `pstat` should be like a
+    `nfldb.PlayPlayer` object.
     """
-    def pstat_to_row(pstat):
-        row = []
-        for column in spec:
-            v = 0
-            if column in statfuns:
-                v = statfuns[column](pstat)
-            else:
-                v = getattr(pstat, column)
-            if isinstance(v, float):
-                row.append('%0.1f' % v)
-            else:
-                row.append(v)
-        return row
+    row = []
+    for column in spec:
+        v = 0
+        if column in statfuns:
+            v = statfuns[column](pstat)
+        else:
+            v = getattr(pstat, column)
+        if isinstance(v, float):
+            row.append('%0.1f' % v)
+        else:
+            row.append(v)
+    return row
 
-    if len(pstats) == 0:
-        print('No statistics found given the criteria.')
-        return
 
-    rows = []
+def header_row(spec):
+    """
+    Returns a list of strings corresponding to the header row of a
+    particular `spec`.
+    """
     header = []
     for column in spec:
         header.append(abbrev.get(column, column))
-
-    rows.append(header)
-    rows += map(pstat_to_row, pstats)
-
-    if summary and len(pstats) > 1:
-        summary = nfldb.aggregate(pstat._pstat for pstat in pstats)[0]
-        if isinstance(pstats[0], Game):
-            allrows = Game(db, None, '-', summary)
-            allrows._fgs = []
-            for pstat in pstats:
-                allrows._fgs += pstat.fgs
-        elif isinstance(pstats[0], Games):
-            allrows = Games(db, '-', [], summary)
-            allrows._fgs = []
-            for pstat in pstats:
-                allrows._fgs += pstat.fgs
-                allrows.games += pstat.games
-        rows.append(pstat_to_row(allrows))
-    print(table(rows))
+    return header
 
 
 def table(lst):
