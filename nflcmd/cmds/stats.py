@@ -8,10 +8,10 @@ import nfldb
 import nflcmd
 
 
+__all__ = ['run']
+
+
 def eprint(*args, **kwargs):
-    """
-    Print to stderr.
-    """
     kwargs['file'] = sys.stderr
     print(*args, **kwargs)
 
@@ -23,8 +23,8 @@ def show_game_table(db, player, year, stype, week_range=None, pos=None):
     games = nflcmd.query_games(db, player, year, stype, week_range).as_games()
     pstats = map(partial(nflcmd.Game.make, db, player), games)
     spec = nflcmd.columns['game'][nflcmd.pcolumns[pos]]
-    nflcmd.show_table(db, player, pstats,
-                      nflcmd.columns['game']['prefix'] + spec)
+    nflcmd.show_table(db, pstats, nflcmd.columns['game']['prefix'] + spec,
+                      summary=True)
 
 
 def show_season_table(db, player, stype, week_range=None, pos=None):
@@ -44,8 +44,8 @@ def show_season_table(db, player, stype, week_range=None, pos=None):
         pstats.append(nflcmd.Games(db, year, game_stats, agg[0]))
 
     spec = nflcmd.columns['season'][nflcmd.pcolumns[pos]]
-    nflcmd.show_table(db, player, pstats,
-                      nflcmd.columns['season']['prefix'] + spec)
+    nflcmd.show_table(db, pstats, nflcmd.columns['season']['prefix'] + spec,
+                      summary=True)
 
 
 def run():
@@ -71,14 +71,15 @@ def run():
        help='When set, only games from the preseason will be used.')
     aa('--post', action='store_true',
        help='When set, only games from the postseason will be used.')
-    aa('--weeks', type=str, default=None,
-       help='Specify an inclusive range of weeks for the game log. e.g., 5-8. '
-            'Has no effect when --season is used.')
+    aa('--weeks', type=str, default='',
+       help='Show stats only for the inclusive range of weeks given,\n'
+            'e.g., "4-8". Other valid examples: "4", "-8",\n'
+            '"4-". Has no effect when --season is used.')
     aa('--season', action='store_true',
        help='When set, statistics are shown by season instead of by game.')
     aa('--show-as', type=str, default=None,
-       help='Force display of player as a particular position. This must be '
-            'set for inactive players.')
+       help='Force display of player as a particular position. This may need '
+            'to be set for inactive players.')
     args = parser.parse_args()
 
     args.player_query = ' '.join(args.player_query)
@@ -89,16 +90,13 @@ def run():
         sys.exit(1)
     print('Player matched: %s' % player)
 
+    week_range = nflcmd.arg_range(args.weeks, 1, 17)
     stype = 'Regular'
     if args.pre:
         stype = 'Preseason'
     if args.post:
         stype = 'Postseason'
 
-    week_range = None
-    if args.weeks is not None and '-' in args.weeks:
-        start, end = map(int, args.weeks.split('-'))
-        week_range = range(start, end+1)
 
     pos = None
     if args.show_as is not None:

@@ -159,6 +159,9 @@ abbrev = {
 
     # Prefixes for season logs
     'year': 'Year', 'teams': 'Team', 'game_count': 'G',
+
+    # Misc.
+    'name': 'Player', 'team': 'Team',
 }
 """
 Abbreviations for statistical fields. (Used in the header of tables.)
@@ -272,6 +275,10 @@ class Games (object):
         return ratio(self.passing_yds, len(self.games))
 
     @property
+    def name(self):
+        return self.player.full_name
+
+    @property
     def passing_300(self):
         return len(filter(lambda p: p.passing_yds >= 300, self.games))
 
@@ -298,6 +305,10 @@ class Games (object):
     @property
     def game_count(self):
         return len(self.games)
+
+    @property
+    def team(self):
+        return self.player.team
 
     @property
     def teams(self):
@@ -406,7 +417,7 @@ def player_team_in_game(db, game, player):
     return q.as_play_players()[0].team
 
 
-def show_table(db, p, pstats, spec):
+def show_table(db, pstats, spec, summary=False):
     """
     Prints a table of statistics to stdout. `p` should be a
     `nfldb.Player` object, `pstats` should be a list of `Game` or
@@ -442,7 +453,7 @@ def show_table(db, p, pstats, spec):
     rows.append(header)
     rows += map(pstat_to_row, pstats)
 
-    if len(pstats) > 1:
+    if summary and len(pstats) > 1:
         summary = nfldb.aggregate(pstat._pstat for pstat in pstats)[0]
         if isinstance(pstats[0], Game):
             allrows = Game(db, None, '-', summary)
@@ -502,3 +513,25 @@ def table(lst):
             nice.append(rowsep)
 
     return '\n'.join(nice)
+
+def arg_range(arg, lo, hi):
+    """
+    Given a string of the format `[int][-][int]`, return a list of
+    integers in the inclusive range specified. Open intervals are
+    allowed, which will be capped at the `lo` and `hi` values given.
+
+    If `arg` is empty or only contains `-`, then all integers in the
+    range `[lo, hi]` will be returned.
+    """
+    arg = arg.strip()
+    if len(arg) == 0 or arg == '-':
+        return range(lo, hi+1)
+    if '-' not in arg:
+        return [int(arg)]
+    start, end = map(str.strip, arg.split('-'))
+    if len(start) == 0:
+        return range(lo, int(end)+1)
+    elif len(end) == 0:
+        return range(int(start), hi+1)
+    else:
+        return range(int(start), int(end)+1)
