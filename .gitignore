@@ -2,3 +2,5 @@ tags
 .*.swp
 dist
 MANIFEST
+build
+doc
