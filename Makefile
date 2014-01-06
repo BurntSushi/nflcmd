@@ -6,7 +6,7 @@ all:
 pypi: docs longdesc.rst
 	sudo python2 setup.py register sdist bdist_wininst upload
 
-docs: er
+docs:
 	pdoc --html --html-dir ./doc --overwrite ./nflcmd
 
 longdesc.rst: nflcmd/__init__.py docstring
