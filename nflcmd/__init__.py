@@ -410,7 +410,7 @@ def player_team_in_game(db, game, player):
     particular `nfldb.Game`.
     """
     q = nfldb.Query(db).game(gsis_id=game.gsis_id)
-    q.play(player_id=player.player_id)
+    q.player(player_id=player.player_id)
     q.limit(1)
     return q.as_play_players()[0].team
 
