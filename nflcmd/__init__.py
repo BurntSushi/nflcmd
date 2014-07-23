@@ -192,8 +192,8 @@ class Game (object):
     def fgs(self):
         if self._fgs is None:
             q = nfldb.Query(self._db)
-            q.play(gsis_id=self.gsis_id, player_id=self.player_id)
-            q.play(kicking_fga=1)
+            q.play_player(gsis_id=self.gsis_id, player_id=self.player_id)
+            q.play_player(kicking_fga=1)
             self._fgs = q.as_play_players()
         return self._fgs
 
@@ -263,8 +263,8 @@ class Games (object):
     def fgs(self):
         if self._fgs is None:
             q = nfldb.Query(self._db)
-            q.play(gsis_id=[g.gsis_id for g in self.games])
-            q.play(player_id=self.player_id, kicking_fga=1)
+            q.play_player(gsis_id=[g.gsis_id for g in self.games])
+            q.play_player(player_id=self.player_id, kicking_fga=1)
             self._fgs = q.as_play_players()
         return self._fgs
 

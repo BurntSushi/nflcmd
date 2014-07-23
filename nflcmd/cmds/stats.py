@@ -125,7 +125,7 @@ def run():
         pos = nfldb.Enums.player_pos[args.show_as]
     elif player.position == nfldb.Enums.player_pos.UNK:
         q = nfldb.Query(db)
-        q.play(player_id=player.player_id)
+        q.play_player(player_id=player.player_id)
         q.sort(('gsis_id', 'desc'))
         pos = nfldb.guess_position(q.as_play_players())
         if pos == nfldb.Enums.player_pos.UNK:

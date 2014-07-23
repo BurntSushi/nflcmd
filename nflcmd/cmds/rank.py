@@ -67,7 +67,7 @@ def run():
     catq = nfldb.QueryOR(db)
     for cat in args.categories:
         k = cat + '__ne'
-        catq.play(**{k: 0})
+        catq.play_player(**{k: 0})
 
     q = nfldb.Query(db)
     q.game(season_year=years, season_type=stype, week=weeks)
